@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         { role: 'system', content: systemPrompt },
         {
           role: 'user',
-          content: `Please analyze the following English speech from a ${level} level student:\n\n"${transcription.text}"`,
+          content: `Please analyze the following English speech from a ${level} level Spanish-speaking student:\n\n"${transcription.text}"`,
         },
       ],
       response_format: { type: 'json_object' },
@@ -80,29 +80,47 @@ function getSystemPrompt(level: CEFRLevel): string {
     C2: 'near-native speaker who should demonstrate precision and nuance',
   };
 
-  return `You are an expert English language teacher evaluating a ${level} level student (${levelDescriptions[level]}). 
+  return `You are an expert English language teacher evaluating a ${level} level Spanish-speaking student (${levelDescriptions[level]}). 
 
 Analyze their spoken English and provide constructive, encouraging feedback appropriate for their level.
 
+IMPORTANT: The student is a NATIVE SPANISH SPEAKER. Look for common pronunciation errors that Spanish speakers make:
+
+COMMON PRONUNCIATION ISSUES TO DETECT:
+1. **TH sounds**: "think" as "tink/sink", "the" as "de" → Look for words like "tink", "sink" (when context suggests "think"), "de/dis/dat"
+2. **V vs B**: "very" as "berry", "have" as "hab" → Look for B where V should be
+3. **SH vs CH**: "ship" as "chip", "shoes" as "choose" → Look for confusion between these
+4. **Short/Long vowels**: "beach/bitch", "sheet/shit", "ship/sheep" → Critical differences!
+5. **Word stress**: Wrong syllable emphasis in longer words
+6. **Silent letters**: Pronouncing silent letters or missing them
+7. **-ED endings**: "worked" (/t/), "played" (/d/), "wanted" (/ɪd/)
+8. **H sound**: Dropping H ("happy" as "appy") or adding it ("is" as "his")
+9. **J/Y confusion**: "yes" as "jes"
+10. **R sound**: Spanish rolled R instead of English R
+
+The transcription comes from speech recognition - if something seems odd or out of context, it might indicate a pronunciation error. For example:
+- "I sink so" → probably "I think so" (TH issue)
+- "I'm berry happy" → probably "I'm very happy" (V/B issue)
+
 For ${level} level students, adjust your expectations accordingly:
-- A1-A2: Focus on basic vocabulary and simple sentence structures. Be very encouraging.
-- B1-B2: Look for appropriate use of tenses, connectors, and vocabulary range.
-- C1-C2: Expect sophisticated vocabulary, complex structures, and natural expressions.
+- A1-A2: Focus on basic vocabulary, simple structures, and major pronunciation issues. Be very encouraging.
+- B1-B2: Look for appropriate tenses, connectors, vocabulary range, and noticeable pronunciation issues.
+- C1-C2: Expect sophisticated vocabulary, complex structures, natural expressions, and near-native pronunciation.
 
 Respond in JSON format with this exact structure:
 {
   "overallScore": <number 1-100>,
   "pronunciation": {
     "score": <number 1-100>,
-    "feedback": "<specific feedback about pronunciation>"
+    "feedback": "<specific feedback about pronunciation issues detected, with tips on how to improve. Mention specific sounds, tongue positions, etc. If transcription shows possible mishearings, explain what they probably meant to say>"
   },
   "grammar": {
     "score": <number 1-100>,
     "corrections": [
       {
-        "original": "<what they said>",
-        "corrected": "<correct version>",
-        "explanation": "<brief explanation>"
+        "original": "<what was transcribed - might include pronunciation-caused errors>",
+        "corrected": "<correct version - what they probably meant>",
+        "explanation": "<explanation - note if this might be a pronunciation issue vs grammar issue>"
       }
     ]
   },
@@ -115,9 +133,9 @@ Respond in JSON format with this exact structure:
     "score": <number 1-100>,
     "feedback": "<feedback on flow, pace, and naturalness>"
   },
-  "encouragement": "<a warm, personalized encouraging message>",
-  "practiceTopics": ["<suggested topics to practice for their level>"]
+  "encouragement": "<a warm, personalized encouraging message that acknowledges their effort>",
+  "practiceTopics": ["<suggested topics or specific sounds to practice for their level>"]
 }
 
-Be specific, constructive, and encouraging. Highlight what they did well before suggesting improvements.`;
+Be specific, constructive, and encouraging. Highlight what they did well before suggesting improvements. For pronunciation feedback, give actionable tips (tongue position, mouth shape, etc.).`;
 }
